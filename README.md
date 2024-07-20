@@ -11,6 +11,4 @@ Antes de executar a aplicação, ajuste as seguintes configurações:
 - **SECRET_KEY**: `"minha_chave_123"`
 - **SQLALCHEMY_DATABASE_URI**: `'sqlite:///ecommerce.db'`
 
-## Modelos
-
 
