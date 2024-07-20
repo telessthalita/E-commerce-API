@@ -17,7 +17,7 @@ CORS(app)
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
-    password = db.Column(db.String(80), nullable=True)
+    password = db.Column(db.String(80), nullable=False)
     cart = db.relationship('CartItem', backref='user', lazy=True)
 
 # Produtos
@@ -57,7 +57,7 @@ def login():
 def logout():
     try:
         logout_user()
-        return jsonify({"message": "Logout successfully"})
+        return jsonify({"message": "Logged out successfully"})
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
@@ -177,11 +177,36 @@ def remove_from_cart(product_id):
 @app.route('/api/cart', methods=['GET'])
 @login_required
 def view_cart():
-     user = User.query.get(int(current_user.id))
-     cart_items = user.cart
-     for cart_item in cart_items:
-         print()
-     #TODO: terminar a rota de itens no carrinho 
+    try:
+        user = User.query.get(int(current_user.id))
+        cart_items = user.cart
+        cart_content = []
+        for cart_item in cart_items:
+            product = Product.query.get(cart_item.product_id)
+            cart_content.append({
+                "id": cart_item.id,
+                "user_id": cart_item.user_id,
+                "product_id": cart_item.product_id,
+                "product_name": product.name,
+                "product_price": product.price,
+            })
+        return jsonify(cart_content), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+    
+@app.route('/api/cart/checkout', methods=["POST"])
+@login_required
+def checkout():
+    try:
+        user = User.query.get(int(current_user.id))
+        cart_items = user.cart
+        for cart_item in cart_items:
+            db.session.delete(cart_item)
+        db.session.commit()
+        return jsonify({'message': 'Checkout successful. Cart has been cleared.'})
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
